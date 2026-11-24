@@ -23,8 +23,8 @@
     <!-- Mobile Top HUD (hidden until joined) -->
     <header id="hud" class="hud" hidden>
       <div class="hud-actions" role="toolbar" aria-label="เครื่องมือ · Controls">
-        <button id="btn-invite" type="button" class="hud-btn" aria-label="คัดลอกลิงก์ชวน · Copy Invite Link" title="เชิญ · Invite">
-          🔗 เชิญ
+        <button id="btn-invite" type="button" class="hud-btn hud-btn-icon" aria-label="คัดลอกลิงก์ชวน · Copy Invite Link" title="เชิญ · Invite">
+          🔗
         </button>
         <button
           id="btn-audio"
@@ -80,8 +80,8 @@
       </button>
     </div>
 
-    <!-- Compact Touch Emote Bar (hidden until joined) -->
-    <div id="emote-bar" class="emote-bar" hidden>
+    <!-- Collapsible Touch Emote Tray (hidden while walking; pops open on ♥ tap) -->
+    <div id="emote-bar" class="emote-bar emote-tray-closed" data-collapsible="true" hidden>
       <div class="emote-buttons" role="group" aria-label="อีโมต · Emotes">
         <button type="button" class="emote-btn" data-emote="heart" aria-label="ส่งหัวใจ · Heart" title="Heart">
           <svg class="pixel-icon" viewBox="0 0 12 12" width="18" height="18" shape-rendering="crispEdges" aria-hidden="true">
@@ -137,9 +137,14 @@
       </div>
 
       <div class="touch-action-stack">
-        <button id="touch-lantern" type="button" class="touch-lantern" aria-label="ปล่อยโคมลอยคู่ · Co-op Sky Lantern">
-          🏮 โคมคู่
-        </button>
+        <div class="touch-sub-actions">
+          <button id="btn-emote-toggle" type="button" class="touch-emote-toggle" aria-expanded="false" aria-label="อีโมต · Emotes" title="อีโมต · Emotes">
+            ♥
+          </button>
+          <button id="touch-lantern" type="button" class="touch-lantern" aria-label="ปล่อยโคมลอยคู่ · Co-op Sky Lantern">
+            โคมคู่
+          </button>
+        </div>
         <button id="touch-interact" type="button" class="touch-interact">
           ลอยกระทง / โต้ตอบ
         </button>

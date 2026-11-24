@@ -387,6 +387,7 @@ function initGame() {
   };
   const touchInteractBtn = document.getElementById('touch-interact');
   const touchLanternBtn = document.getElementById('touch-lantern');
+  const btnEmoteToggle = document.getElementById('btn-emote-toggle');
 
   // Shop modal, wish modal & help DOM
   const shopModal = document.getElementById('shop-modal');
@@ -430,7 +431,7 @@ function initGame() {
     x: clamp(480 - viewport.viewW / 2, 0, Math.max(0, WORLD_CONFIG.width - viewport.viewW)),
     y: viewport.viewH <= WORLD_CONFIG.height
       ? clamp(160 - viewport.viewH * 0.68, 0, WORLD_CONFIG.height - viewport.viewH)
-      : -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.48),
+      : -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.4),
   };
 
   let linkedRoomId = null;
@@ -524,6 +525,7 @@ function initGame() {
   let lastLanternAt = 0;
   let lastPointerInteractAt = 0;
   let lastPointerLanternAt = 0;
+  let lastPointerEmoteToggleAt = 0;
   let lastModalOpenedAt = 0;
   let lastFrameTime = performance.now();
 
@@ -643,7 +645,15 @@ function initGame() {
     syncDpadClasses();
   }
 
+  function setEmoteTrayOpen(open) {
+    if (!emoteBar || emoteBar.dataset.collapsible !== 'true') return;
+    const isOpen = Boolean(open);
+    emoteBar.classList.toggle('emote-tray-closed', !isOpen);
+    btnEmoteToggle?.setAttribute('aria-expanded', String(isOpen));
+  }
+
   function openShopModal() {
+    setEmoteTrayOpen(false);
     cancelLocalLanternReady(true);
     clearMovementInputs();
     lastModalOpenedAt = performance.now();
@@ -665,6 +675,7 @@ function initGame() {
   }
 
   function openPhotoModal() {
+    setEmoteTrayOpen(false);
     cancelLocalLanternReady(true);
     clearMovementInputs();
     lastModalOpenedAt = performance.now();
@@ -685,6 +696,7 @@ function initGame() {
   }
 
   function openWishModal(spawnX) {
+    setEmoteTrayOpen(false);
     cancelLocalLanternReady(true);
     activeKrathongSpawnX = spawnX;
     clearMovementInputs();
@@ -710,6 +722,7 @@ function initGame() {
   }
 
   function openHelpPopover() {
+    setEmoteTrayOpen(false);
     cancelLocalLanternReady(true);
     clearMovementInputs();
     lastModalOpenedAt = performance.now();
@@ -1151,7 +1164,7 @@ function initGame() {
           WORLD_CONFIG.height - viewport.viewH
         );
       } else {
-        cam.y = -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.48);
+        cam.y = -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.4);
       }
 
       setVisible(entryOverlay, false);
@@ -1217,6 +1230,7 @@ function initGame() {
 
   function triggerEmote(emoteName) {
     if (!hasJoined || !localChar || !EMOTES.includes(emoteName)) return;
+    setEmoteTrayOpen(false);
     const nowMs = Date.now();
     const p = characters[localChar];
     p.emote = emoteName;
@@ -1868,6 +1882,27 @@ function initGame() {
   });
 
   // Emote bar events
+  if (btnEmoteToggle) {
+    const toggleEmoteTray = () => {
+      if (!hasJoined || isModalOpen()) return;
+      const isCurrentlyClosed = emoteBar?.classList.contains('emote-tray-closed');
+      setEmoteTrayOpen(Boolean(isCurrentlyClosed));
+    };
+    btnEmoteToggle.addEventListener('pointerdown', (e) => {
+      if (!hasJoined || isModalOpen()) return;
+      e.preventDefault();
+      lastPointerEmoteToggleAt = performance.now();
+      toggleEmoteTray();
+    });
+    btnEmoteToggle.addEventListener('touchend', (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    btnEmoteToggle.addEventListener('click', () => {
+      if (performance.now() - lastPointerEmoteToggleAt < 400) return;
+      toggleEmoteTray();
+    });
+  }
+
   for (const btn of emoteButtons) {
     btn.addEventListener('click', () => {
       if (btn.dataset.emote) {
@@ -2018,6 +2053,9 @@ function initGame() {
       }
 
       if (ix !== 0 || iy !== 0) {
+        if (emoteBar?.dataset.collapsible === 'true' && !emoteBar.classList.contains('emote-tray-closed')) {
+          setEmoteTrayOpen(false);
+        }
         if (local.isSitting) {
           standUpFromBench(true);
         }
@@ -2143,7 +2181,7 @@ function initGame() {
           WORLD_CONFIG.height - viewport.viewH
         );
       } else {
-        targetCamY = -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.48);
+        targetCamY = -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.4);
       }
       const camLerp = Math.min(1, dt * 8);
       cam.x = lerp(cam.x, targetCamX, camLerp);
@@ -2163,7 +2201,7 @@ function initGame() {
       const idleTargetY =
         viewport.viewH <= WORLD_CONFIG.height
           ? clamp(150 - viewport.viewH * 0.65, 0, WORLD_CONFIG.height - viewport.viewH)
-          : -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.48);
+          : -Math.floor((viewport.viewH - WORLD_CONFIG.height) * 0.4);
       cam.x = lerp(cam.x, idleTargetX, Math.min(1, dt * 3));
       cam.y = lerp(cam.y, idleTargetY, Math.min(1, dt * 3));
     }
