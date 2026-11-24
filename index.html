@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <script>
+    if (
+      !/[?&]desktop=1(?:&|$)/.test(window.location.search) &&
+      window.innerWidth <= 900 &&
+      navigator.maxTouchPoints > 0
+    ) {
+      window.location.replace('./mobile.html' + window.location.hash);
+    }
+  </script>
+  <title>คืนเดือนเพ็ญ ณ กว๊านพะเยา · Kwan Phayao Yi Peng</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Pixelify+Sans:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="game-wrapper">
+    <canvas id="game-canvas" aria-label="ฉากริมกว๊านพะเยายามค่ำคืน · Kwan Phayao Lakeside"></canvas>
+
+    <!-- Top HUD (hidden until joined) -->
+    <header id="hud" class="hud" hidden>
+      <div class="hud-left">
+        <div id="hud-room-status" class="hud-pill hud-room-status" aria-live="polite">
+          กว๊านพะเยา · Kwan Phayao
+        </div>
+        <div id="hud-krathong-badge" class="hud-pill hud-krathong-badge" aria-live="polite">
+          ยังไม่มีกระทง · No Krathong
+        </div>
+      </div>
+      <div class="hud-actions">
+        <button id="btn-invite" type="button" class="hud-btn" title="คัดลอกลิงก์ชวน · Copy Invite Link">
+          เชิญ · Invite
+        </button>
+        <button
+          id="btn-audio"
+          type="button"
+          class="hud-btn"
+          aria-pressed="false"
+          title="เปิด/ปิดเสียง · Toggle Ambient Audio (M)"
+        >
+          เสียง · Mute
+        </button>
+        <button
+          id="btn-help"
+          type="button"
+          class="hud-btn hud-btn-icon"
+          aria-label="วิธีเล่น · Controls & Guide"
+          title="วิธีเล่น · Controls & Guide"
+        >
+          ?
+        </button>
+        <a
+          id="btn-switch-mobile"
+          href="./mobile.html"
+          class="hud-btn hud-btn-link"
+          title="สลับไปโหมดมือถือ · Switch to Mobile Touch UI"
+        >
+          📱 มือถือ
+        </a>
+      </div>
+    </header>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <!-- Floating Interaction Prompts (stacked cleanly so photo & interact never overlap) -->
+    <div class="floating-prompts">
+      <button id="btn-naga-photo" type="button" class="naga-photo-btn" hidden>
+        📷 ถ่ายรูปคู่หน้าพญานาค · Take Photo (P)
+      </button>
+      <button id="interact-prompt" type="button" class="interact-prompt" hidden>
+        E · โต้ตอบ
+      </button>
+    </div>
+
+    <!-- Bottom Emote Bar & Keybind Hint (hidden until joined) -->
+    <div id="emote-bar" class="emote-bar" hidden>
+      <div class="emote-buttons" role="group" aria-label="อีโมต · Emotes">
+        <button type="button" class="emote-btn" data-emote="heart" aria-label="ส่งหัวใจ · Heart (1)" title="Heart (1)">
+          <svg class="pixel-icon" viewBox="0 0 12 12" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="2" y="2" width="3" height="2" fill="#ff8a65" />
+            <rect x="7" y="2" width="3" height="2" fill="#ff8a65" />
+            <rect x="1" y="3" width="10" height="3" fill="#ff8a65" />
+            <rect x="2" y="6" width="8" height="2" fill="#e56b55" />
+            <rect x="4" y="8" width="4" height="2" fill="#e56b55" />
+            <rect x="5" y="10" width="2" height="1" fill="#c94f3d" />
+            <rect x="3" y="3" width="1" height="1" fill="#ffd9a0" />
+          </svg>
+          <span class="emote-key">1</span>
+        </button>
+        <button type="button" class="emote-btn" data-emote="lantern" aria-label="โคมลอย · Sky Lantern (2)" title="Lantern (2)">
+          <svg class="pixel-icon" viewBox="0 0 12 12" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="4" y="1" width="4" height="1" fill="#d4af37" />
+            <rect x="3" y="2" width="6" height="5" fill="#ffb74d" />
+            <rect x="4" y="3" width="4" height="3" fill="#ffe29a" />
+            <rect x="4" y="7" width="4" height="2" fill="#ff8a65" />
+            <rect x="5" y="9" width="2" height="2" fill="#fff0c2" />
+          </svg>
+          <span class="emote-key">2</span>
+        </button>
+        <button type="button" class="emote-btn" data-emote="sparkle" aria-label="ประกายแสง · Sparkle (3)" title="Sparkle (3)">
+          <svg class="pixel-icon" viewBox="0 0 12 12" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="5" y="1" width="2" height="10" fill="#ffcf6e" />
+            <rect x="1" y="5" width="10" height="2" fill="#ffcf6e" />
+            <rect x="4" y="4" width="4" height="4" fill="#fff3c4" />
+            <rect x="2" y="2" width="1" height="1" fill="#ffb74d" />
+            <rect x="9" y="9" width="1" height="1" fill="#ffb74d" />
+          </svg>
+          <span class="emote-key">3</span>
+        </button>
+        <button type="button" class="emote-btn" data-emote="wave" aria-label="โบกมือ · Wave (4)" title="Wave (4)">
+          <svg class="pixel-icon" viewBox="0 0 12 12" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="4" y="2" width="1" height="4" fill="#ffd6a8" />
+            <rect x="6" y="1" width="1" height="5" fill="#ffd6a8" />
+            <rect x="8" y="2" width="1" height="4" fill="#ffd6a8" />
+            <rect x="2" y="4" width="2" height="4" fill="#ffd6a8" />
+            <rect x="4" y="5" width="5" height="5" fill="#f3be8a" />
+            <rect x="1" y="2" width="1" height="2" fill="#ffb74d" />
+            <rect x="10" y="3" width="1" height="2" fill="#ffb74d" />
+          </svg>
+          <span class="emote-key">4</span>
+        </button>
+      </div>
+      <div class="keybind-hint">WASD / Arrows เดิน · E โต้ตอบ · L โคมลอยคู่ · P ถ่ายรูปคู่ · 1-4 อีโมต · M เสียง</div>
+    </div>
+
+    <!-- Mobile / Touch Controls (hidden until joined; visible via media query on touch/mobile) -->
+    <div id="touch-controls" class="touch-controls" hidden>
+      <div class="dpad" role="group" aria-label="ปุ่มควบคุมทิศทาง · Directional Pad">
+        <button id="dpad-up" type="button" class="dpad-btn dpad-up" data-dir="up" aria-label="เดินขึ้น · Move Up">▲</button>
+        <button id="dpad-left" type="button" class="dpad-btn dpad-left" data-dir="left" aria-label="เดินซ้าย · Move Left">◀</button>
+        <div class="dpad-center" aria-hidden="true"></div>
+        <button id="dpad-right" type="button" class="dpad-btn dpad-right" data-dir="right" aria-label="เดินขวา · Move Right">▶</button>
+        <button id="dpad-down" type="button" class="dpad-btn dpad-down" data-dir="down" aria-label="เดินลง · Move Down">▼</button>
+      </div>
+      <button id="touch-interact" type="button" class="touch-interact">
+        E / โต้ตอบ
+      </button>
+    </div>
+
+    <!-- Entry Overlay (centered panel over live animated canvas) -->
+    <section id="entry-overlay" class="entry-overlay" aria-labelledby="entry-title">
+      <div class="entry-panel pixel-panel">
+        <header class="entry-header">
+          <div id="connection-mode-badge" class="mode-badge">Local Demo Mode</div>
+          <h1 id="entry-title" class="entry-title">คืนเดือนเพ็ญ ณ กว๊านพะเยา</h1>
+          <p class="entry-subtitle">Full Moon Night at Kwan Phayao · Prototype</p>
+        </header>
+
+        <div class="entry-section">
+          <label for="passcode-input" class="field-label">รหัสห้องลับ · Room Passcode</label>
+          <input
+            id="passcode-input"
+            type="text"
+            class="pixel-input"
+            maxlength="48"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="ตั้งรหัสห้องเดียวกันเพื่อเดินเล่นด้วยกัน..."
+          />
+          <div id="passcode-linked-note" class="linked-note" hidden>
+            <span>เชื่อมต่อผ่านลิงก์เชิญ · Joined via invite link</span>
+            <button id="change-room-btn" type="button" class="btn-link">เปลี่ยนห้อง · Change Room</button>
+          </div>
+          <label class="checkbox-row" for="remember-room-checkbox">
+            <input id="remember-room-checkbox" type="checkbox" checked />
+            <span>จำรหัสห้องนี้ไว้ · Remember room</span>
+          </label>
+        </div>
+
+        <div class="entry-section">
+          <div class="field-label">เลือกตัวละคร · Choose Character</div>
+          <div class="character-grid">
+            <button id="select-him" type="button" class="char-card" data-char="him" aria-pressed="false">
+              <div class="char-preview-frame">
+                <canvas id="preview-him" width="48" height="72"></canvas>
+              </div>
+              <span class="char-name">อะตอม · Atom</span>
+              <span id="status-him" class="char-status">ว่าง · Ready</span>
+            </button>
+
+            <button id="select-her" type="button" class="char-card" data-char="her" aria-pressed="false">
+              <div class="char-preview-frame">
+                <canvas id="preview-her" width="48" height="72"></canvas>
+              </div>
+              <span class="char-name">ฟ้าใส · Fahsai</span>
+              <span id="status-her" class="char-status">ว่าง · Ready</span>
+            </button>
+          </div>
+        </div>
+
+        <p id="entry-error" class="entry-error" role="alert" aria-live="polite"></p>
+
+        <button id="enter-btn" type="button" class="btn-primary">
+          เดินเล่นริมกว๊าน · Enter Lakeside
+        </button>
+        <a id="entry-switch-ui" href="./mobile.html" class="ui-switch-link">
+          📱 เปิดโหมดมือถือ (Touch UI) · Open Mobile Version
+        </a>
+      </div>
+    </section>
+
+    <!-- Krathong Shop Modal -->
+    <section
+      id="shop-modal"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shop-modal-title"
+      hidden
+    >
+      <div class="modal-panel pixel-panel">
+        <div class="modal-header">
+          <h2 id="shop-modal-title" class="modal-title">ร้านกระทงริมกว๊าน · Krathong Shop</h2>
+          <button id="shop-close-btn" type="button" class="close-btn" aria-label="ปิด · Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="shop-subtitle">เลือกซื้อกระทงก่อนนำไปลอยที่ริมน้ำ · Pick a krathong before heading to the water</p>
+
+          <div id="shop-style-group" class="krathong-style-group" role="group" aria-label="แบบกระทง · Krathong Style">
+            <button type="button" class="krathong-option active" data-shop-style="marigold" aria-pressed="true">
+              <svg class="pixel-icon" viewBox="0 0 14 12" width="22" height="18" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="6" y="1" width="2" height="2" fill="#fff0c2" />
+                <rect x="6" y="3" width="2" height="2" fill="#ffb74d" />
+                <rect x="3" y="5" width="8" height="2" fill="#ffca28" />
+                <rect x="2" y="7" width="10" height="2" fill="#ffb74d" />
+                <rect x="3" y="9" width="8" height="2" fill="#355c3c" />
+              </svg>
+              <span>ดาวเรือง · Marigold</span>
+            </button>
+            <button type="button" class="krathong-option" data-shop-style="lotus" aria-pressed="false">
+              <svg class="pixel-icon" viewBox="0 0 14 12" width="22" height="18" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="6" y="1" width="2" height="2" fill="#fff0c2" />
+                <rect x="6" y="3" width="2" height="2" fill="#ffb74d" />
+                <rect x="3" y="5" width="8" height="2" fill="#f48fb1" />
+                <rect x="2" y="7" width="10" height="2" fill="#ec6f98" />
+                <rect x="3" y="9" width="8" height="2" fill="#355c3c" />
+              </svg>
+              <span>บัวหลวง · Lotus</span>
+            </button>
+            <button type="button" class="krathong-option" data-shop-style="jasmine" aria-pressed="false">
+              <svg class="pixel-icon" viewBox="0 0 14 12" width="22" height="18" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="6" y="1" width="2" height="2" fill="#fff0c2" />
+                <rect x="6" y="3" width="2" height="2" fill="#ffb74d" />
+                <rect x="3" y="5" width="8" height="2" fill="#f3f5f8" />
+                <rect x="2" y="7" width="10" height="2" fill="#cfd8e3" />
+                <rect x="3" y="9" width="8" height="2" fill="#355c3c" />
+              </svg>
+              <span>มะลิ · Jasmine</span>
+            </button>
+          </div>
+
+          <button id="shop-buy-btn" type="button" class="btn-primary">
+            ซื้อกระทงนี้ · Buy Krathong
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Wish & Krathong Modal -->
+    <section
+      id="wish-modal"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="wish-modal-title"
+      hidden
+    >
+      <div class="modal-panel pixel-panel">
+        <div class="modal-header">
+          <h2 id="wish-modal-title" class="modal-title">อธิษฐานและลอยกระทง · Float a Krathong</h2>
+          <button id="wish-close-btn" type="button" class="close-btn" aria-label="ปิด · Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="field-label">แบบกระทง · Krathong Style</div>
+          <div id="krathong-style-group" class="krathong-style-group" role="group" aria-label="แบบกระทง · Krathong Style">
+            <button type="button" class="krathong-option active" data-style="marigold" aria-pressed="true">
+              <svg class="pixel-icon" viewBox="0 0 14 12" width="22" height="18" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="6" y="1" width="2" height="2" fill="#fff0c2" />
+                <rect x="6" y="3" width="2" height="2" fill="#ffb74d" />
+                <rect x="3" y="5" width="8" height="2" fill="#ffca28" />
+                <rect x="2" y="7" width="10" height="2" fill="#ffb74d" />
+                <rect x="3" y="9" width="8" height="2" fill="#355c3c" />
+              </svg>
+              <span>ดาวเรือง · Marigold</span>
+            </button>
+            <button type="button" class="krathong-option" data-style="lotus" aria-pressed="false">
+              <svg class="pixel-icon" viewBox="0 0 14 12" width="22" height="18" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="6" y="1" width="2" height="2" fill="#fff0c2" />
+                <rect x="6" y="3" width="2" height="2" fill="#ffb74d" />
+                <rect x="3" y="5" width="8" height="2" fill="#f48fb1" />
+                <rect x="2" y="7" width="10" height="2" fill="#ec6f98" />
+                <rect x="3" y="9" width="8" height="2" fill="#355c3c" />
+              </svg>
+              <span>บัวหลวง · Lotus</span>
+            </button>
+            <button type="button" class="krathong-option" data-style="jasmine" aria-pressed="false">
+              <svg class="pixel-icon" viewBox="0 0 14 12" width="22" height="18" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="6" y="1" width="2" height="2" fill="#fff0c2" />
+                <rect x="6" y="3" width="2" height="2" fill="#ffb74d" />
+                <rect x="3" y="5" width="8" height="2" fill="#f3f5f8" />
+                <rect x="2" y="7" width="10" height="2" fill="#cfd8e3" />
+                <rect x="3" y="9" width="8" height="2" fill="#355c3c" />
+              </svg>
+              <span>มะลิ · Jasmine</span>
+            </button>
+          </div>
+
+          <label for="wish-input" class="field-label">คำอธิษฐาน · Your Wish</label>
+          <textarea
+            id="wish-input"
+            class="pixel-textarea"
+            maxlength="280"
+            rows="3"
+            placeholder="อธิษฐานขอพร..."
+          ></textarea>
+
+          <p class="wish-privacy">
+            คำอธิษฐานของคุณเป็นความลับเสมอ · Private &amp; never shown to anyone here
+          </p>
+
+          <button id="wish-submit-btn" type="button" class="btn-primary">
+            ลอยกระทง · Release to the Water
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Naga Together Keepsake Photo Modal -->
+    <section
+      id="photo-modal"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="photo-modal-title"
+      hidden
+    >
+      <div class="modal-panel pixel-panel photo-modal-panel">
+        <div class="modal-header">
+          <h2 id="photo-modal-title" class="modal-title">ภาพความทรงจำ ณ ลานพญานาค · Kwan Phayao Keepsake</h2>
+          <button id="photo-close-btn" type="button" class="close-btn" aria-label="ปิด · Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="photo-frame">
+            <img id="photo-preview-img" alt="ภาพคู่ ณ ลานพญานาค กว๊านพะเยา · Kwan Phayao Keepsake Photo" />
+          </div>
+          <div class="photo-actions">
+            <button id="photo-download-btn" type="button" class="btn-primary">
+              บันทึกรูปภาพ · Save Screenshot
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Help Popover -->
+    <section
+      id="help-popover"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-title"
+      hidden
+    >
+      <div class="modal-panel pixel-panel help-panel">
+        <div class="modal-header">
+          <h2 id="help-title" class="modal-title">คู่มือริมกว๊าน · Lakeside Guide</h2>
+          <button id="help-close-btn" type="button" class="close-btn" aria-label="ปิด · Close">✕</button>
+        </div>
+        <div class="help-body">
+          <ul class="help-list">
+            <li><strong>เดินเล่น · Walk:</strong> WASD / Arrow keys หรือปุ่มทิศทางบนมือถือ</li>
+            <li><strong>ซื้อกระทง · Krathong Shop:</strong> แวะซื้อกระทงที่ร้านฝั่งขวาก่อน แล้วค่อยเดินไปริมน้ำใกล้พญานาคเพื่อกด E อธิษฐานและลอยกระทง (Buy a krathong at the right-side shop first, then float it near Phaya Naga).</li>
+            <li><strong>ปล่อยโคมลอยคู่ · Co-op Sky Lantern:</strong> ยืนใกล้กันทั้งอะตอมและฟ้าใส แล้วกด L หรือ E ช่วยกันยกและปล่อยโคมลอยขึ้นฟ้าด้วยกัน (Stand close together and press L or E together to hold and release a sky lantern).</li>
+            <li><strong>ถ่ายรูปคู่หน้าพญานาค · Naga Photo:</strong> เดินมายืนหน้าพญานาคด้วยกันแล้วกดปุ่มถ่ายรูป (หรือ P) เพื่อบันทึกภาพคู่เป็นที่ระลึก</li>
+            <li><strong>กล่องดนตรี · Music Box:</strong> เดินไปสุดฝั่งซ้ายของริมกว๊านแล้วกด E เพื่อเปิดเพลง Canon in D</li>
+            <li><strong>นั่งพัก · Bench:</strong> นั่งเก้าอี้ไม้ริมกว๊านชมจันทร์ด้วยกัน</li>
+            <li><strong>อีโมต &amp; เสียง · Emotes &amp; Audio:</strong> กด 1–4 ส่งอีโมต · กด M เปิด/ปิดเสียง</li>
+          </ul>
+          <p class="help-note">
+            คำอธิษฐานถูกเก็บเป็นความลับส่วนตัว ไม่แสดงบนหน้าจอของอีกฝ่าย
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./js/game.js"></script>
+</body>
+</html>
